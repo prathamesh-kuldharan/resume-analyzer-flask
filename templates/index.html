@@ -3,59 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Resume Analyzer Portal</title>
+    <title>ATS Intelligent Resume Analyzer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>🔍 AI Resume Analyzer Dashboard</h1>
-        <p class="subtitle">Powered by Flask, PyMuPDF, and SQLite</p>
-        <hr>
-
-        <div class="grid">
-            <div class="card">
-                <h3>📥 Ingest PDF Profiles</h3>
-                <form action="/" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="resume_files" multiple accept=".pdf" required>
-                    <button type="submit" class="btn btn-primary">Analyze & Store</button>
-                </form>
-            </div>
-
-            <div class="card">
-                <h3>⚡ Query & Filter Candidates by Skill</h3>
-                <form action="/" method="GET">
-                    <input type="text" name="search" placeholder="e.g., Python, JavaScript" value="{{ search_query }}">
-                    <button type="submit" class="btn btn-secondary">Search Pipeline</button>
-                    {% if search_query %}
-                        <a href="/" class="clear-btn">Clear Filter</a>
-                    {% endif %}
-                </form>
-            </div>
+        
+        <div class="header-area">
+            <h1>ATS Resume Analyzer</h1>
+            <p class="subtitle">Optimize your profile against professional enterprise filters instantly.</p>
         </div>
 
-        <h2 style="margin-top: 2rem;">📋 Processed Profiles Database</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Filename</th>
-                    <th>Extracted Name Reference</th>
-                    <th>Identified Technical Skills</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in records %}
-                <tr>
-                    <td><code>{{ row[0] }}</code></td>
-                    <td><strong>{{ row[1] }}</strong></td>
-                    <td><span class="badge">{{ row[2] }}</span></td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="3" style="text-align: center; color: #888;">No profiles processed inside the SQLite indexes yet.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card">
+            <form action="/analyze" method="POST" enctype="multipart/form-data" onsubmit="document.querySelector('.scanning-line').style.display='block'">
+                <div class="form-group">
+                    <label for="job_description">Target Requirements Specification</label>
+                    <textarea id="job_description" name="job_description" rows="6" placeholder="Paste target operational descriptions or corporate role competencies here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Candidate Dossier</label>
+                    <div class="file-dropzone" onclick="document.getElementById('resume_file').click()">
+                        <div class="scanning-line"></div>
+                        <span class="upload-icon">📁</span>
+                        <p style="margin: 0; font-size: 1.05rem; font-weight: 600;">Drop candidate profile here</p>
+                        <p style="margin: 6px 0 0 0; color: var(--text-gray); font-size: 0.9rem;">or <span style="color: var(--accent-blue);">browse your computer</span></p>
+                        <input type="file" id="resume_file" name="resume_file" style="display: none;" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Compute Match Vector</button>
+            </form>
+        </div>
+
+        {% if score is defined %}
+        <div class="card">
+            <div style="text-align: center;">
+                <label>System Alignment Index</label>
+                <div class="score-circle">{{ score }}%</div>
+            </div>
+
+            <div class="metrics-layout">
+                <div class="metric-card">
+                    <h3 style="margin: 0; font-size: 1.05rem; color: #7ee787; display: flex; align-items: center; gap: 8px;">
+                        <span>✓</span> Identified Qualifications
+                    </h3>
+                    <div class="pill-container">
+                        {% for skill in matched_keywords %}
+                        <span class="pill pill-match">{{ skill }}</span>
+                        {% else %}
+                        <span style="color: var(--text-gray); font-size: 0.9rem;">No concurrent markers isolated.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <h3 style="margin: 0; font-size: 1.05rem; color: #ff7b72; display: flex; align-items: center; gap: 8px;">
+                        <span>✗</span> Target Discrepancies
+                    </h3>
+                    <div class="pill-container">
+                        {% for skill in missing_keywords %}
+                        <span class="pill pill-missing">{{ skill }}</span>
+                        {% else %}
+                        <span style="color: #7ee787; font-size: 0.9rem;">Complete keyword structural alignment.</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
     </div>
 </body>
 </html>

@@ -10,118 +10,83 @@
     <div class="container">
         
         <div class="header-area">
-            <h1>Resume Analyzer</h1>
-            <p class="subtitle">Upload your resume and match it against any job description instantly.</p>
+            <h1>Resume Insight Extractor</h1>
+            <p class="subtitle">Upload a resume to automatically extract technical skills and CGPA metrics.</p>
         </div>
 
         <div class="card">
-            <form action="/" method="POST" enctype="multipart/form-data" onsubmit="document.querySelector('.scanning-line').style.display='block'">
+            <form action="/" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="job_description">Job Description</label>
-                    <textarea id="job_description" name="job_description" rows="6" placeholder="Paste the job description here..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Upload Resume</label>
+                    <label>Upload Resume (PDF / TXT)</label>
                     <div class="file-dropzone" onclick="document.getElementById('resume_file').click()">
-                        <div class="scanning-line"></div>
                         <span class="upload-icon">📁</span>
                         <p style="margin: 0; font-size: 1.05rem; font-weight: 600;">Drag & drop resume here</p>
-                        <p style="margin: 6px 0 0 0; color: var(--text-gray); font-size: 0.9rem;">or <span style="color: var(--accent-blue);">browse your computer</span></p>
+                        <p style="margin: 6px 0 0 0; color: #8b949e; font-size: 0.9rem;">or <span style="color: #58a6ff;">browse to upload</span></p>
                         <input type="file" id="resume_file" name="resume_file" style="display: none;" required>
                     </div>
                 </div>
-
-                <button type="submit" class="btn-submit">Analyze Resume</button>
+                <button type="submit" class="btn-submit">Extract Insights</button>
             </form>
         </div>
 
-        {% if score is defined %}
-        <div class="card">
-            <div style="text-align: center;">
-                <label>Match Score</label>
-                <div class="score-circle">{{ score }}%</div>
+        {% if skills is defined or cgpa is defined %}
+        <div class="card" style="border-color: #2ea44f;">
+            <h2 style="margin-top: 0; color: #2ea44f;">📊 Extracted Profile Data</h2>
+            <hr style="border: 0; border-top: 1px solid #30363d; margin-bottom: 20px;">
+            
+            <div class="insight-row">
+                <strong>Target CGPA Score:</strong> 
+                <span class="highlight-text">{{ cgpa if cgpa else 'Not Found' }}</span>
             </div>
 
-            <div class="metrics-layout">
-                <div class="metric-card">
-                    <h3 style="margin: 0; font-size: 1.05rem; color: #7ee787; display: flex; align-items: center; gap: 8px;">
-                        <span>✓</span> Matched Keywords
-                    </h3>
-                    <div class="pill-container">
-                        {% for skill in matched_keywords %}
-                        <span class="pill pill-match">{{ skill }}</span>
-                        {% else %}
-                        <span style="color: var(--text-gray); font-size: 0.9rem;">No matching keywords found.</span>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="metric-card">
-                    <h3 style="margin: 0; font-size: 1.05rem; color: #ff7b72; display: flex; align-items: center; gap: 8px;">
-                        <span>✗</span> Missing Keywords
-                    </h3>
-                    <div class="pill-container">
-                        {% for skill in missing_keywords %}
-                        <span class="pill pill-missing">{{ skill }}</span>
-                        {% else %}
-                        <span style="color: #7ee787; font-size: 0.9rem;">Perfect keyword match!</span>
-                        {% endfor %}
-                    </div>
+            <div style="margin-top: 20px;">
+                <strong>Identified Technical Skills:</strong>
+                <div class="pill-container" style="margin-top: 10px;">
+                    {% for skill in skills %}
+                    <span class="pill">{{ skill }}</span>
+                    {% else %}
+                    <span style="color: #8b949e;">No explicit skills identified.</span>
+                    {% endfor %}
                 </div>
             </div>
         </div>
         {% endif %}
         
     </div>
-<script>
+
+    <script>
         const dropzone = document.querySelector('.file-dropzone');
         const fileInput = document.getElementById('resume_file');
 
-        // Prevent browser from opening the file when dragged over
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropzone.addEventListener(eventName, e => e.preventDefault(), false);
         });
 
-        // Add visual glow when dragging over the box
         ['dragenter', 'dragover'].forEach(eventName => {
             dropzone.addEventListener(eventName, () => {
-                dropzone.style.borderColor = 'var(--accent-purple)';
-                dropzone.style.background = 'rgba(188, 140, 255, 0.05)';
+                dropzone.style.borderColor = '#58a6ff';
             }, false);
         });
 
-        // Remove visual glow when leaving the box
         ['dragleave', 'drop'].forEach(eventName => {
             dropzone.addEventListener(eventName, () => {
-                dropzone.style.borderColor = 'rgba(88, 166, 255, 0.3)';
-                dropzone.style.background = 'rgba(10, 14, 20, 0.4)';
+                dropzone.style.borderColor = '#da3633';
             }, false);
         });
 
-        // Handle the actual dropped file
         dropzone.addEventListener('drop', e => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-
+            const files = e.dataTransfer.files;
             if (files.length) {
-                fileInput.files = files; // Assign the dropped file to the hidden input
-                
-                // Update text inside the dropzone to show it received the file
-                const textParagraph = dropzone.querySelector('p');
-                textParagraph.textContent = `Selected: ${files[0].name}`;
-                textParagraph.style.color = 'var(--accent-blue)';
+                fileInput.files = files;
+                dropzone.querySelector('p').textContent = `Selected: ${files[0].name}`;
             }
         }, false);
 
-        // Also update text if they use the standard browse window click instead
         fileInput.addEventListener('change', () => {
             if (fileInput.files.length) {
-                const textParagraph = dropzone.querySelector('p');
-                textParagraph.textContent = `Selected: ${fileInput.files[0].name}`;
-                textParagraph.style.color = 'var(--accent-blue)';
+                dropzone.querySelector('p').textContent = `Selected: ${fileInput.files[0].name}`;
             }
         });
-    </script>    
+    </script>
 </body>
 </html>

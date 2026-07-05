@@ -10,42 +10,33 @@
     <div class="container">
         
         <div class="header-area">
-            <h1>Resume Insight Extractor</h1>
-            <p class="subtitle">Upload a resume to automatically extract technical skills and CGPA metrics.</p>
+            <h1>Resume Analyzer</h1>
+            <p class="subtitle">Upload a resume to extract technical skills and CGPA metrics instantly.</p>
         </div>
 
         <div class="card">
             <form action="/" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label>Upload Resume (PDF / TXT)</label>
-                    <div class="file-dropzone" onclick="document.getElementById('resume_file').click()">
-                        <span class="upload-icon">📁</span>
-                        <p style="margin: 0; font-size: 1.05rem; font-weight: 600;">Drag & drop resume here</p>
-                        <p style="margin: 6px 0 0 0; color: #8b949e; font-size: 0.9rem;">or <span style="color: #58a6ff;">browse to upload</span></p>
-                        <input type="file" id="resume_file" name="resume_file" style="display: none;" required>
-                    </div>
+                    <label for="resume_file">Upload Resume (PDF or TXT)</label>
+                    <input type="file" id="resume_file" name="resume_file" class="file-input" required>
                 </div>
-                <button type="submit" class="btn-submit">Extract Insights</button>
+                <button type="submit" class="btn-submit">Analyze Resume</button>
             </form>
         </div>
 
         {% if skills is defined or cgpa is defined %}
-        <div class="card" style="border-color: #2ea44f;">
-            <h2 style="margin-top: 0; color: #2ea44f;">📊 Extracted Profile Data</h2>
-            <hr style="border: 0; border-top: 1px solid #30363d; margin-bottom: 20px;">
-            
-            <div class="insight-row">
-                <strong>Target CGPA Score:</strong> 
-                <span class="highlight-text">{{ cgpa if cgpa else 'Not Found' }}</span>
+        <div class="card result-card">
+            <h2>Extracted Results</h2>
+            <div class="result-item">
+                <strong>CGPA:</strong> <span class="highlight">{{ cgpa }}</span>
             </div>
-
-            <div style="margin-top: 20px;">
-                <strong>Identified Technical Skills:</strong>
-                <div class="pill-container" style="margin-top: 10px;">
+            <div class="result-item">
+                <strong>Skills Identified:</strong>
+                <div class="skills-list">
                     {% for skill in skills %}
-                    <span class="pill">{{ skill }}</span>
+                    <span class="skill-tag">{{ skill }}</span>
                     {% else %}
-                    <span style="color: #8b949e;">No explicit skills identified.</span>
+                    <span class="no-data">No specific skills found.</span>
                     {% endfor %}
                 </div>
             </div>
@@ -53,40 +44,5 @@
         {% endif %}
         
     </div>
-
-    <script>
-        const dropzone = document.querySelector('.file-dropzone');
-        const fileInput = document.getElementById('resume_file');
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, e => e.preventDefault(), false);
-        });
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, () => {
-                dropzone.style.borderColor = '#58a6ff';
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, () => {
-                dropzone.style.borderColor = '#da3633';
-            }, false);
-        });
-
-        dropzone.addEventListener('drop', e => {
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                fileInput.files = files;
-                dropzone.querySelector('p').textContent = `Selected: ${files[0].name}`;
-            }
-        }, false);
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length) {
-                dropzone.querySelector('p').textContent = `Selected: ${fileInput.files[0].name}`;
-            }
-        });
-    </script>
 </body>
 </html>

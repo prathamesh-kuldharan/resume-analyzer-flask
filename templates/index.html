@@ -3,46 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume Analyzer</title>
+    <title>AI Resume Analyzer Portal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        
-        <div class="header-area">
-            <h1>Resume Analyzer</h1>
-            <p class="subtitle">Upload a resume to extract technical skills and CGPA metrics instantly.</p>
-        </div>
+        <h1>🔍 AI Resume Analyzer Dashboard</h1>
+        <p class="subtitle">Powered by Flask, PyMuPDF, and SQLite</p>
+        <hr>
 
-        <div class="card">
-            <form action="/" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="resume_file">Upload Resume (PDF or TXT)</label>
-                    <input type="file" id="resume_file" name="resume_file" class="file-input" required>
-                </div>
-                <button type="submit" class="btn-submit">Analyze Resume</button>
-            </form>
-        </div>
-
-        {% if skills is defined or cgpa is defined %}
-        <div class="card result-card">
-            <h2>Extracted Results</h2>
-            <div class="result-item">
-                <strong>CGPA:</strong> <span class="highlight">{{ cgpa }}</span>
+        <div class="grid">
+            <div class="card">
+                <h3>📥 Ingest PDF Profiles</h3>
+                <form action="/" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="resume_files" multiple accept=".pdf" required>
+                    <button type="submit" class="btn btn-primary">Analyze & Store</button>
+                </form>
             </div>
-            <div class="result-item">
-                <strong>Skills Identified:</strong>
-                <div class="skills-list">
-                    {% for skill in skills %}
-                    <span class="skill-tag">{{ skill }}</span>
-                    {% else %}
-                    <span class="no-data">No specific skills found.</span>
-                    {% endfor %}
-                </div>
+
+            <div class="card">
+                <h3>⚡ Query & Filter Candidates by Skill</h3>
+                <form action="/" method="GET">
+                    <input type="text" name="search" placeholder="e.g., Python, JavaScript" value="{{ search_query }}">
+                    <button type="submit" class="btn btn-secondary">Search Pipeline</button>
+                    {% if search_query %}
+                        <a href="/" class="clear-btn">Clear Filter</a>
+                    {% endif %}
+                </form>
             </div>
         </div>
-        {% endif %}
-        
+
+        <h2 style="margin-top: 2rem;">📋 Processed Profiles Database</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Extracted Name Reference</th>
+                    <th>Identified Technical Skills</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in records %}
+                <tr>
+                    <td><code>{{ row[0] }}</code></td>
+                    <td><strong>{{ row[1] }}</strong></td>
+                    <td><span class="badge">{{ row[2] }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align: center; color: #888;">No profiles processed inside the SQLite indexes yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </body>
 </html>

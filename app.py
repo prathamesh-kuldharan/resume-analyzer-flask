@@ -1,60 +1,95 @@
-import os
-import re
+from flask import Flask, render_template, request, redirect, url_for, flash
+import fitz  # PyMuPDF
 import sqlite3
-from flask import Flask, render_template, request
-# Import your original PDF library here (e.g., import pdfplumber or pypdf)
+import os
 
 app = Flask(__name__)
-DB_FILE = "database.db"
+app.secret_key = "super_secret_key_for_flash_messages"
+DB_PATH = "database.db"
 
+# 1. Initialize SQLite Database Schema
 def init_db():
-    with sqlite3.connect(DB_FILE) as conn:
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS profiles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                skills TEXT,
-                cgpa TEXT
-            )
-        ''')
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS resumes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT UNIQUE,
+            candidate_name TEXT,
+            extracted_text TEXT,
+            matched_skills TEXT
+        )
+    ''')
+    conn.commit()
     conn.close()
 
-init_db()
+# 2. Extract Text using PyMuPDF
+def extract_text_from_pdf(stream):
+    doc = fitz.open(stream=stream, filetype="pdf")
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    return text
 
-def extract_insights(text):
-    # Regex to catch standard CGPA patterns (e.g., 8.5, 9.2, 3.8/4.0)
-    cgpa_match = re.search(r'\b([0-9]\.[0-9]{1,2})\b', text)
-    cgpa = cgpa_match.group(1) if cgpa_match else "Not Specified"
-    
-    # Simple core vocabulary matching
-    skills_vocab = ["Python", "Java", "C++", "SQL", "Git", "Machine Learning", "OpenCV", "Flask", "HTML", "CSS"]
-    found_skills = [skill for skill in skills_vocab if re.search(r'\b' + re.escape(skill) + r'\b', text, re.IGNORECASE)]
-    
-    return found_skills, cgpa
+# Simple dictionary-based keyword matching algorithm
+def identify_skills(text):
+    SKILL_KEYWORDS = ["python", "flask", "django", "html", "css", "javascript", 
+                      "sqlite", "react", "sql", "java", "c++", "git", "docker"]
+    found_skills = []
+    text_lower = text.lower()
+    for skill in SKILL_KEYWORDS:
+        if skill in text_lower:
+            found_skills.append(skill.capitalize())
+    return ", ".join(found_skills) if found_skills else "None Identified"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
     if request.method == "POST":
-        file = request.files.get("resume_file")
-        if file and file.filename != '':
-            # --- RESTORE YOUR ORIGINAL PDF TEXT EXTRACTION HERE ---
-            # Example if you used pdfplumber:
-            # with pdfplumber.open(file) as pdf:
-            #     text_content = "".join([page.extract_text() for page in pdf.pages])
+        # Handle file uploads
+        if 'resume_files' not in request.files:
+            return redirect(request.url)
+        
+        files = request.files.getlist('resume_files')
+        
+        for file in files:
+            if file.filename == '':
+                continue
             
-            # Temporary fallback for plain text files:
-            text_content = file.read().decode("utf-8", errors="ignore")
-            
-            skills, cgpa = extract_insights(text_content)
-            
-            with sqlite3.connect(DB_FILE) as conn:
-                conn.execute(
-                    "INSERT INTO profiles (skills, cgpa) VALUES (?, ?)",
-                    (", ".join(skills), cgpa)
-                )
-            
-            return render_template("index.html", skills=skills, cgpa=cgpa)
-            
-    return render_template("index.html")
+            if file and file.filename.endswith('.pdf'):
+                try:
+                    file_stream = file.read()
+                    raw_text = extract_text_from_pdf(file_stream)
+                    skills = identify_skills(raw_text)
+                    
+                    # Basic extraction for Candidate Name (uses first line of document)
+                    first_line = raw_text.split('\n')[0].strip()
+                    name = first_line if len(first_line) < 50 else "Unknown Profile"
+
+                    # Save to SQLite Database
+                    cursor.execute('''
+                        INSERT OR IGNORE INTO resumes (filename, candidate_name, extracted_text, matched_skills)
+                        VALUES (?, ?, ?, ?)
+                    ''', (file.filename, name, raw_text, skills))
+                except Exception as e:
+                    print(f"Error parsing file {file.filename}: {e}")
+        
+        conn.commit()
+    
+    # Check for search filtering
+    search_query = request.args.get('search', '').strip()
+    if search_query:
+        cursor.execute("SELECT filename, candidate_name, matched_skills FROM resumes WHERE matched_skills LIKE ?", (f'%{search_query}%',))
+    else:
+        cursor.execute("SELECT filename, candidate_name, matched_skills FROM resumes")
+        
+    records = cursor.fetchall()
+    conn.close()
+    
+    return render_template("index.html", records=records, search_query=search_query)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    init_db()
+    app.run(debug=True, port=5000)

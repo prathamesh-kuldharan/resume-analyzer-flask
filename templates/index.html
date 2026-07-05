@@ -74,5 +74,54 @@
         {% endif %}
         
     </div>
+<script>
+        const dropzone = document.querySelector('.file-dropzone');
+        const fileInput = document.getElementById('resume_file');
+
+        // Prevent browser from opening the file when dragged over
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, e => e.preventDefault(), false);
+        });
+
+        // Add visual glow when dragging over the box
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.style.borderColor = 'var(--accent-purple)';
+                dropzone.style.background = 'rgba(188, 140, 255, 0.05)';
+            }, false);
+        });
+
+        // Remove visual glow when leaving the box
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => {
+                dropzone.style.borderColor = 'rgba(88, 166, 255, 0.3)';
+                dropzone.style.background = 'rgba(10, 14, 20, 0.4)';
+            }, false);
+        });
+
+        // Handle the actual dropped file
+        dropzone.addEventListener('drop', e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length) {
+                fileInput.files = files; // Assign the dropped file to the hidden input
+                
+                // Update text inside the dropzone to show it received the file
+                const textParagraph = dropzone.querySelector('p');
+                textParagraph.textContent = `Selected: ${files[0].name}`;
+                textParagraph.style.color = 'var(--accent-blue)';
+            }
+        }, false);
+
+        // Also update text if they use the standard browse window click instead
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                const textParagraph = dropzone.querySelector('p');
+                textParagraph.textContent = `Selected: ${fileInput.files[0].name}`;
+                textParagraph.style.color = 'var(--accent-blue)';
+            }
+        });
+    </script>    
 </body>
 </html>

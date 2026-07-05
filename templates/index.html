@@ -3,69 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATS Intelligent Resume Analyzer</title>
+    <title>Resume Analyzer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         
         <div class="header-area">
-            <h1>ATS Resume Analyzer</h1>
-            <p class="subtitle">Optimize your profile against professional enterprise filters instantly.</p>
+            <h1>Resume Analyzer</h1>
+            <p class="subtitle">Upload your resume and match it against any job description instantly.</p>
         </div>
 
         <div class="card">
             <form action="/analyze" method="POST" enctype="multipart/form-data" onsubmit="document.querySelector('.scanning-line').style.display='block'">
                 <div class="form-group">
-                    <label for="job_description">Target Requirements Specification</label>
-                    <textarea id="job_description" name="job_description" rows="6" placeholder="Paste target operational descriptions or corporate role competencies here..."></textarea>
+                    <label for="job_description">Job Description</label>
+                    <textarea id="job_description" name="job_description" rows="6" placeholder="Paste the job description here..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>Candidate Dossier</label>
+                    <label>Upload Resume</label>
                     <div class="file-dropzone" onclick="document.getElementById('resume_file').click()">
                         <div class="scanning-line"></div>
                         <span class="upload-icon">📁</span>
-                        <p style="margin: 0; font-size: 1.05rem; font-weight: 600;">Drop candidate profile here</p>
+                        <p style="margin: 0; font-size: 1.05rem; font-weight: 600;">Drag & drop resume here</p>
                         <p style="margin: 6px 0 0 0; color: var(--text-gray); font-size: 0.9rem;">or <span style="color: var(--accent-blue);">browse your computer</span></p>
                         <input type="file" id="resume_file" name="resume_file" style="display: none;" required>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-submit">Compute Match Vector</button>
+                <button type="submit" class="btn-submit">Analyze Resume</button>
             </form>
         </div>
 
         {% if score is defined %}
         <div class="card">
             <div style="text-align: center;">
-                <label>System Alignment Index</label>
+                <label>Match Score</label>
                 <div class="score-circle">{{ score }}%</div>
             </div>
 
             <div class="metrics-layout">
                 <div class="metric-card">
                     <h3 style="margin: 0; font-size: 1.05rem; color: #7ee787; display: flex; align-items: center; gap: 8px;">
-                        <span>✓</span> Identified Qualifications
+                        <span>✓</span> Matched Keywords
                     </h3>
                     <div class="pill-container">
                         {% for skill in matched_keywords %}
                         <span class="pill pill-match">{{ skill }}</span>
                         {% else %}
-                        <span style="color: var(--text-gray); font-size: 0.9rem;">No concurrent markers isolated.</span>
+                        <span style="color: var(--text-gray); font-size: 0.9rem;">No matching keywords found.</span>
                         {% endfor %}
                     </div>
                 </div>
 
                 <div class="metric-card">
                     <h3 style="margin: 0; font-size: 1.05rem; color: #ff7b72; display: flex; align-items: center; gap: 8px;">
-                        <span>✗</span> Target Discrepancies
+                        <span>✗</span> Missing Keywords
                     </h3>
                     <div class="pill-container">
                         {% for skill in missing_keywords %}
                         <span class="pill pill-missing">{{ skill }}</span>
                         {% else %}
-                        <span style="color: #7ee787; font-size: 0.9rem;">Complete keyword structural alignment.</span>
+                        <span style="color: #7ee787; font-size: 0.9rem;">Perfect keyword match!</span>
                         {% endfor %}
                     </div>
                 </div>
